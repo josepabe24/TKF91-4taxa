@@ -62,16 +62,16 @@ def main_blocking(msa_indel):
 
 # for mortal blocks
 # get the block
-m_1=m_block[0]
+m_1=m_block[1]
 n=m_1.shape[1]
 # split into left and right subtree
 left=m_1[0:2,:]
 right=m_1[2:,:]
 
-# finding position of ancestral characters
+
 def m_ancestral_generator(block):
     """
-    return ancestoral possibilities
+    return ancestoral possibilities for mortal block
     """
     anc_lst=[]
     n=block.shape[1]
@@ -92,7 +92,7 @@ def m_ancestral_generator(block):
         else:
             
             for i in range(2**(n-1),2**(n)):
-                anc=np.array(list(format(i,'b')),dtype=int)
+                anc=np.array(list(format(i,'0{}b'.format(n))),dtype=int)
                 
                 anc_pos=np.where(anc[1:]==1)[0]
                 
@@ -104,7 +104,38 @@ def m_ancestral_generator(block):
 anc_left=m_ancestral_generator(left)
 anc_right=m_ancestral_generator(right)
 
+def im_ancestral_generator(block):
+    """
+    return ancestoral possibilities for immortal block
+    """
+    anc_lst=[]
+    n=block.shape[1]
+    if n==1:
+        anc_lst.append(np.array([1],dtype=int))
+        anc_lst.append(np.array([0],dtype=int))
+    else:
+        c_sum=np.sum(block[:,1:],0)
+        anc_idx=np.where(c_sum==2)[0]
+        
+        if anc_idx.size==0:
+            for i in range(2**(n)):
+                anc=np.array(list(format(i,'0{}b'.format(n))),dtype=int)
+                anc.shape=(1,n)
+                anc_lst.append(anc)
+        else:
+            
+            for i in range(0,2**(n)):
+                anc=np.array(list(format(i,'b')),dtype=int)
+                
+                anc_pos=np.where(anc[1:]==1)[0]
+                
+                if np.array_equal(anc_pos, anc_idx):
+                    anc.shape=(1,n)
+                    anc_lst.append(anc)
+    return anc_lst
 
+anc_left_im=im_ancestral_generator(left)
+anc_right_im=im_ancestral_generator(right)
 
     
 
