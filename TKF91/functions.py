@@ -138,19 +138,19 @@ def im_ancestral_generator(block):
 anc_left_im=im_ancestral_generator(left)
 anc_right_im=im_ancestral_generator(right)
 ############################################################################
-# beta(t)
+# probabilities of ancestral fates
 def beta(lamda, mu, t):
-    beta_val=1-np.exp((lamda-mu)*t)/(mu-(lamda*(np.exp((lamda-mu)*t))))
+    beta_val=(1-np.exp((lamda-mu)*t))/(mu-(lamda*(np.exp((lamda-mu)*t))))
     return beta_val
 
 def P_k(lamda, mu, t, k):
     b=beta(lamda, mu, t)
-    prob=np.exp(-mu*t)*(1-(lamda*b))*((lamda*b)**(n-1))
+    prob=np.exp(-1*mu*t)*(1-(lamda*b))*((lamda*b)**(k-1))
     return prob
                         
 def p_prime_k(lamda, mu, t, k):
     b=beta(lamda, mu, t)
-    prob=(1-(np.exp(-mu*t))-(mu*b))*(1-(lamda*b))*((lamda*b)**(n-1))
+    prob=(1-(np.exp(-mu*t))-(mu*b))*(1-(lamda*b))*((lamda*b)**(k-1))
     return prob
 
 def p_prime_0(lamda, mu, t):
@@ -159,11 +159,71 @@ def p_prime_0(lamda, mu, t):
 
 def p_dprime_k(lamda, mu, t, k):
     b=beta(lamda, mu, t)
-    prob=(1-(lamda*b))*((lamda*b)**(n-1))
+    prob=(1-(lamda*b))*((lamda*b)**(k-1))
     return prob
 ############################################################################
+# subblocking
+def sub_blocking(block,anc):
+    """
+    Splits the block into subblocks based on the presence of ancestral link
+    """
+    # col_sums=np.sum(msa_indel,0)
+    blk_idx=list(np.where(anc==1))[1]
+    
+    im_block=[]
+    blocks=[]
+    
+    for i in range(len(blk_idx)):
+        pos=blk_idx[i]
+        
+        if i==0:
+            if pos==i:
+                 # im_block.append(np.zeros((4,1),dtype=int))
+                 continue
+            else:
+                 im_block.append(block[:,:pos])
+        elif i==len(blk_idx)-1:
+            blocks.append(block[:,blk_idx[i-1]:pos])
+            blocks.append(block[:,pos:])
+        else:
+            blocks.append(block[:,blk_idx[i-1]:pos])
+            
+    return [im_block,blocks]
 
-
+def mblock_lK(mblock_lst,lamda, mu, t):
+    
+    prob=1
+    
+    for mblock in mblock_lst:
+        
+        children=np.sum(mblock,1)
+            
+        for i in range(2):
+            k=children[i]
+            print(k)
+            if k==0:
+                prob=prob*p_prime_0(lamda, mu, t)
+                print(prob, "del")
+            else:
+                if mblock[i,0]==0:
+                    prob=prob*p_prime_k(lamda, mu, t, k)
+                    print(prob, "del and birth")
+                else:
+                    prob=prob*P_k(lamda, mu, t, k)
+                    print(prob, "sur and birth")
+                
+        prob=(lamda/mu)*prob
+        print(prob)
+    
+    return prob
+    
+        
+                
+                
+    
+    
+    
+    
 
     
     

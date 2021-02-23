@@ -5,47 +5,50 @@ Created on Thu Feb 18 09:23:41 2021
 @author: josh
 """
 
-from pyArango.connection import *
-
-# creating connection
-conn=Connection(username='root', password='josh123')
-
-# creating database
-db=conn.createDatabase(name="tree")
-db
-
-# creating a collection
-anc_collection=db.createCollection(name="ancestors")
-
-# creating document
-
-doc1=anc_collection.createDocument()
-doc1["A"]=left
-
-doc2=anc_collection.createDocument()
-doc2["node1"]=anc_left
-
-doc1._key="A"
-doc1.save()
-doc2._key="node1"
-doc2.save()
-
-db.createCollection(name="ChildOf", className = 'Edges')
-
-AQL="""INSERT { _from: "ancestors/A", _to: "ancestors/node1" } INTO ChildOf Return NEW"""
-qry_result=db.AQLQuery(AQL)
+from neo4j import GraphDatabase
 
 
-anc_query = """
-// First find the start node, i.e., A
-FOR c IN ancestors
-    FILTER c._key== "A"
-    // Then start a Graph traversal from that start node
-    FOR v IN 1..1 OUTBOUND c ChildOf
-    RETURN v[v._key]
-"""
+# making connection
+uri = "bolt://localhost:7687"
+driver = GraphDatabase.driver(uri, auth=("neo4j", "josh123"), encrypted = False)
 
-query_result = db.AQLQuery(anc_query, rawResults=True)
-for doc in  query_result:
-    print(doc)
-    print()
+# session=driver.session()
+
+# result=session.run("MATCH (n) RETURN n")
+
+for record in result:
+    print(record)
+
+block=m_1.tolist()
+iblock=left.tolist()
+def create_child(tx, block):
+    tx.run("CREATE (a:child {A: $A, B:$B,C:$C, D:$D} )",
+           A=block[0],B=block[1],C=block[2],D=block[3])
+
+with driver.session() as session:
+    session.write_transaction(create_child, block)   
+    
+    
+    
+def create_inode(tx, iblock):
+    tx.run("MATCH (c:child)"
+        "CREATE (c)-[:child_of]->(:node {L: $A, R:$B})",
+           A=iblock[0],B=iblock[1])
+
+with driver.session() as session:
+    session.write_transaction(create_inode, iblock)   
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+driver.close()
