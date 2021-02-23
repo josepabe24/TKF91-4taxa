@@ -68,7 +68,7 @@ n=m_1.shape[1]
 left=m_1[0:2,:]
 right=m_1[2:,:]
 
-
+# ancestral generator for mortal block
 def m_ancestral_generator(block):
     """
     return ancestoral possibilities for mortal block
@@ -104,6 +104,7 @@ def m_ancestral_generator(block):
 anc_left=m_ancestral_generator(left)
 anc_right=m_ancestral_generator(right)
 
+# ancestral generator for immortal block
 def im_ancestral_generator(block):
     """
     return ancestoral possibilities for immortal block
@@ -136,8 +137,34 @@ def im_ancestral_generator(block):
 
 anc_left_im=im_ancestral_generator(left)
 anc_right_im=im_ancestral_generator(right)
+############################################################################
+# beta(t)
+def beta(lamda, mu, t):
+    beta_val=1-np.exp((lamda-mu)*t)/(mu-(lamda*(np.exp((lamda-mu)*t))))
+    return beta_val
+
+def P_k(lamda, mu, t, k):
+    b=beta(lamda, mu, t)
+    prob=np.exp(-mu*t)*(1-(lamda*b))*((lamda*b)**(n-1))
+    return prob
+                        
+def p_prime_k(lamda, mu, t, k):
+    b=beta(lamda, mu, t)
+    prob=(1-(np.exp(-mu*t))-(mu*b))*(1-(lamda*b))*((lamda*b)**(n-1))
+    return prob
+
+def p_prime_0(lamda, mu, t):
+    b=beta(lamda, mu, t)
+    return (mu*b)
+
+def p_dprime_k(lamda, mu, t, k):
+    b=beta(lamda, mu, t)
+    prob=(1-(lamda*b))*((lamda*b)**(n-1))
+    return prob
+############################################################################
+
+
 
     
-
     
 
