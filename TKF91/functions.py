@@ -143,7 +143,7 @@ def beta(lamda, mu, t):
     beta_val=(1-np.exp((lamda-mu)*t))/(mu-(lamda*(np.exp((lamda-mu)*t))))
     return beta_val
 
-def P_k(lamda, mu, t, k):
+def p_k(lamda, mu, t, k):
     b=beta(lamda, mu, t)
     prob=np.exp(-1*mu*t)*(1-(lamda*b))*((lamda*b)**(k-1))
     return prob
@@ -190,6 +190,7 @@ def sub_blocking(block,anc):
             
     return [im_block,blocks]
 
+# likelihood mortal block
 def mblock_lK(mblock_lst,lamda, mu, t):
     
     prob=1
@@ -209,16 +210,31 @@ def mblock_lK(mblock_lst,lamda, mu, t):
                     prob=prob*p_prime_k(lamda, mu, t, k)
                     print(prob, "del and birth")
                 else:
-                    prob=prob*P_k(lamda, mu, t, k)
+                    prob=prob*p_k(lamda, mu, t, k)
                     print(prob, "sur and birth")
                 
         prob=(lamda/mu)*prob
         print(prob)
     
     return prob
-    
         
-                
+# likelihood immortal block
+def imblock_lK(imblock,lamda, mu, t):
+    
+    prob=1
+    
+    children=np.sum(imblock,1)
+            
+    for i in range(2):
+        k=children[i]+1
+        print(k)
+        prob=prob*p_dprime_k(lamda, mu, t,k)
+        print(prob, "immortal")
+        
+    prob=(1-(lamda/mu))*prob
+    print(prob)
+    
+    return prob                
                 
     
     
