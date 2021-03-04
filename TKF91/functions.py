@@ -7,6 +7,7 @@ Created on Tue Feb 16 10:41:44 2021
 
 from Bio import SeqIO
 import numpy as np
+from itertools import product
 
 
 
@@ -63,10 +64,17 @@ def main_blocking(msa_indel):
 # for mortal blocks
 # get the block
 m_1=m_block[1]
-n=m_1.shape[1]
+# n=m_1.shape[1]
+
+im_1=im_block[0]
 # split into left and right subtree
 left=m_1[0:2,:]
 right=m_1[2:,:]
+
+left_im=im_1[0:2,:]
+right_im=im_1[2:,:]
+
+
 
 # ancestral generator for mortal block
 def m_ancestral_generator(block):
@@ -135,8 +143,8 @@ def im_ancestral_generator(block):
                     anc_lst.append(anc)
     return anc_lst
 
-anc_left_im=im_ancestral_generator(left)
-anc_right_im=im_ancestral_generator(right)
+anc_left_im=im_ancestral_generator(left_im)
+anc_right_im=im_ancestral_generator(right_im)
 ############################################################################
 # probabilities of ancestral fates
 def beta(lamda, mu, t):
@@ -168,25 +176,38 @@ def sub_blocking(block,anc):
     Splits the block into subblocks based on the presence of ancestral link
     """
     # col_sums=np.sum(msa_indel,0)
-    blk_idx=list(np.where(anc==1))[1]
+    blk_idx=list(np.where(anc==1))[0]
     
     im_block=[]
     blocks=[]
     
-    for i in range(len(blk_idx)):
-        pos=blk_idx[i]
-        
-        if i==0:
-            if pos==i:
-                 # im_block.append(np.zeros((4,1),dtype=int))
-                 continue
-            else:
-                 im_block.append(block[:,:pos])
-        elif i==len(blk_idx)-1:
-            blocks.append(block[:,blk_idx[i-1]:pos])
-            blocks.append(block[:,pos:])
+    if len(blk_idx)==0:
+        im_block.append(block[:,:])
+    
+    elif len(blk_idx)==1:
+        pos=blk_idx[0]
+        if pos==0:
+            blocks.append(block[:,:])
         else:
-            blocks.append(block[:,blk_idx[i-1]:pos])
+            imblock.append(block[:,:pos])
+            blocks.append(block[:,pos:])
+            
+        
+    else:
+        for i in range(len(blk_idx)):
+            pos=blk_idx[i]
+            
+            if i==0:
+                if pos==i:
+                     # im_block.append(np.zeros((4,1),dtype=int))
+                     continue
+                else:
+                     im_block.append(block[:,:pos])
+            elif i==len(blk_idx)-1:
+                blocks.append(block[:,blk_idx[i-1]:pos])
+                blocks.append(block[:,pos:])
+            else:
+                blocks.append(block[:,blk_idx[i-1]:pos])
             
     return [im_block,blocks]
 
@@ -237,10 +258,71 @@ def imblock_lK(imblock,lamda, mu, t):
     return prob                
                 
     
-    
-    
-    
+######################################################################   
 
+# creating dictionary to store LK
+internal_dict=dict()
+root_dict=dict()    
+
+# for mortal blocks
+# get the block
+sel_block=m_block[1]
+
+# split into left and right subtree
+left=sel_block[0:2,:]
+right=sel_block[2:,:]
+
+# ancestral generation
+anc_left=m_ancestral_generator(left)
+anc_right=m_ancestral_generator(right)
+
+# finding combinations
+anc_comb=list(product(anc_left, anc_right))
+
+sel_lft=anc_comb[0][0][0]
+sel_rgt=anc_comb[0][1][0]
+
+key1=sel_lft.tolist()
+key1.extend(sel_rgt.tolist())
+key1=str(key1)
+if key1 in internal_dict.keys():
+    prod=internal_dict[key1]
+    print("dictionary")
+else:
+    sub_left=sub_blocking(left,sel_lft)
+    sub_right=sub_blocking(right,sel_rgt)
+
+    lblk_lk=mblock_lK(sub_left[1],0.4, 0.6, 0.5)
+    rblk_lk=mblock_lK(sub_right[1],0.4, 0.6, 0.5)
+
+    prod=lblk_lk*rblk_lk
+    internal_dict[key1]=prod
+
+intrnl_anc=np.array([sel_lft,sel_rgt])
+print(intrnl_anc)
+root_anc=m_ancestral_generator(intrnl_anc)
+print(root_anc)
+
+prod_1=0
+for anc in root_anc:
+    print(anc)
+    key2=anc.tolist()
+    key2.extend(key1)
+    key2=str(key2)
+    if key2 in root_dict.keys():
+        lblk_lk=root_dict[key2]
+        print("dictionary")
+    else:
+        cols=anc.shape[1]
+        anc.shape=(cols,)
+        sub_blocks=sub_blocking(intrnl_anc,anc)
+        lblk_lk=mblock_lK(sub_blocks[1],0.4, 0.6, 0.5)
+        root_dict[key2]=lblk_lk
+        
+    prod_1+=lblk_lk
+    print(prod_1)
+    
+LK_1=prod*prod_1
     
     
 
