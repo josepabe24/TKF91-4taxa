@@ -31,14 +31,14 @@ with driver.session() as session:
     
     
 def create_inode(tx, iblock):
-    tx.run("MATCH (c:child)"
-        "CREATE (c)-[:child_of]->(:node {L: $A, R:$B})",
+    tx.run("MATCH (c:node)"
+        "CREATE (c)-[:child_of]->(:root {L: $A, R:$B})",
            A=iblock[0],B=iblock[1])
 
 with driver.session() as session:
     session.write_transaction(create_inode, iblock)   
     
-    
+ 
     
     
     

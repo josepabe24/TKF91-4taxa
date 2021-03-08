@@ -77,6 +77,7 @@ right_im=im_1[2:,:]
 
 
 # ancestral generator for mortal block
+
 def m_ancestral_generator(block):
     """
     return ancestoral possibilities for mortal block
@@ -89,14 +90,27 @@ def m_ancestral_generator(block):
     else:
         c_sum=np.sum(block[:,1:],0)
         anc_idx=np.where(c_sum==2)[0]
-        anc_idx
+        anc_check=np.where(c_sum==1)[0]
+        # anc_idx
         
         
         if anc_idx.size==0:
             for i in range(2**(n-1),2**(n)):
                 anc=np.array(list(format(i,'b')),dtype=int)
                 anc.shape=(1,n)
-                anc_lst.append(anc)
+                if len(anc_check)>0:
+                    count=0
+                    for pos in anc_check:
+                        if anc[0][pos+1]==1 or anc[0][pos]==1:
+                            count+=1
+                            if count==len(anc_check):
+                                anc_lst.append(anc)
+                        else:
+                            break
+                else:
+                    anc_lst.append(anc)
+                    
+                
         else:
             
             for i in range(2**(n-1),2**(n)):
@@ -104,9 +118,21 @@ def m_ancestral_generator(block):
                 
                 anc_pos=np.where(anc[1:]==1)[0]
                 
-                if np.array_equal(anc_pos, anc_idx):
+                if len(np.setdiff1d(anc_idx,anc_pos))==0:
                     anc.shape=(1,n)
-                    anc_lst.append(anc)
+                    if len(anc_check)>0:
+                        count=0
+                        for pos in anc_check:
+                            if anc[0][pos+1]==1 or anc[0][pos]==1:
+                                count+=1
+                                # print(count,count==len(anc_check))
+                                if count==len(anc_check):
+                                    anc_lst.append(anc)
+                            else:
+                                break
+                    else:
+                        anc_lst.append(anc)
+                    
     return anc_lst
 
 anc_left=m_ancestral_generator(left)
@@ -279,50 +305,62 @@ anc_right=m_ancestral_generator(right)
 # finding combinations
 anc_comb=list(product(anc_left, anc_right))
 
-sel_lft=anc_comb[0][0][0]
-sel_rgt=anc_comb[0][1][0]
+block_lk=0
 
-key1=sel_lft.tolist()
-key1.extend(sel_rgt.tolist())
-key1=str(key1)
-if key1 in internal_dict.keys():
-    prod=internal_dict[key1]
-    print("dictionary")
-else:
-    sub_left=sub_blocking(left,sel_lft)
-    sub_right=sub_blocking(right,sel_rgt)
-
-    lblk_lk=mblock_lK(sub_left[1],0.4, 0.6, 0.5)
-    rblk_lk=mblock_lK(sub_right[1],0.4, 0.6, 0.5)
-
-    prod=lblk_lk*rblk_lk
-    internal_dict[key1]=prod
-
-intrnl_anc=np.array([sel_lft,sel_rgt])
-print(intrnl_anc)
-root_anc=m_ancestral_generator(intrnl_anc)
-print(root_anc)
-
-prod_1=0
-for anc in root_anc:
-    print(anc)
-    key2=anc.tolist()
-    key2.extend(key1)
-    key2=str(key2)
-    if key2 in root_dict.keys():
-        lblk_lk=root_dict[key2]
+for item in anc_comb:
+    sel_lft=item[0][0]
+    sel_rgt=item[1][0]
+    # print(sel_lft)
+    lst_anc_l=sel_lft.tolist()
+    keyl=str(lst_anc_l)
+    
+    if keyl in internal_dict.keys():
+        lblk_lk=internal_dict[keyl]
         print("dictionary")
     else:
-        cols=anc.shape[1]
-        anc.shape=(cols,)
-        sub_blocks=sub_blocking(intrnl_anc,anc)
-        lblk_lk=mblock_lK(sub_blocks[1],0.4, 0.6, 0.5)
-        root_dict[key2]=lblk_lk
-        
-    prod_1+=lblk_lk
-    print(prod_1)
+        sub_left=sub_blocking(left,sel_lft)
+        lblk_lk=mblock_lK(sub_left[1],0.4, 0.6, 0.5)
+        internal_dict[keyl]=lblk_lk
+    lst_anc_r=sel_rgt.tolist()  
+    keyr=str(lst_anc_r)
     
-LK_1=prod*prod_1
+    if keyr in internal_dict.keys():
+        rblk_lk=internal_dict[keyr]
+        print("dictionary")
+    else:
+        sub_right=sub_blocking(right,sel_rgt)
+        rblk_lk=mblock_lK(sub_right[1],0.4, 0.6, 0.5)
+        internal_dict[keyr]=rblk_lk
+        
+    prod=lblk_lk*rblk_lk
+    
+    intrnl_anc=np.array([sel_lft,sel_rgt])
+    print(intrnl_anc)
+    root_anc=m_ancestral_generator(intrnl_anc)
+    print(root_anc)
+    
+    prod_1=0
+    for anc in root_anc:
+        print(anc)
+        key2=anc.tolist()
+        key2.extend(lst_anc_l)
+        key2.extend(lst_anc_r)
+        key2=str(key2)
+        if key2 in root_dict.keys():
+            lblk_lk=root_dict[key2]
+            print("dictionary")
+        else:
+            cols=anc.shape[1]
+            anc.shape=(cols,)
+            sub_blocks=sub_blocking(intrnl_anc,anc)
+            lblk_lk=mblock_lK(sub_blocks[1],0.4, 0.6, 0.5)
+            root_dict[key2]=lblk_lk
+            
+        prod_1+=lblk_lk
+        print(prod_1)
+        
+    block_lk+=(prod*prod_1)
+    
     
     
 
