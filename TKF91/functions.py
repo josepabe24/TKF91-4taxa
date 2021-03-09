@@ -96,7 +96,7 @@ def m_ancestral_generator(block):
         
         if anc_idx.size==0:
             for i in range(2**(n-1),2**(n)):
-                anc=np.array(list(format(i,'b')),dtype=int)
+                anc=np.array(list(format(i,'0{}b'.format(n))),dtype=int)
                 anc.shape=(1,n)
                 if len(anc_check)>0:
                     count=0
@@ -149,24 +149,55 @@ def im_ancestral_generator(block):
         anc_lst.append(np.array([1],dtype=int))
         anc_lst.append(np.array([0],dtype=int))
     else:
-        c_sum=np.sum(block[:,1:],0)
+        c_sum=np.sum(block[:],0)
         anc_idx=np.where(c_sum==2)[0]
+        anc_check=np.where(c_sum==1)[0]
         
         if anc_idx.size==0:
             for i in range(2**(n)):
                 anc=np.array(list(format(i,'0{}b'.format(n))),dtype=int)
                 anc.shape=(1,n)
-                anc_lst.append(anc)
+                anc_pos=np.where(anc[:]==1)[0]
+                if len(anc_check)>0:
+                    count=0
+                    for pos in anc_check:
+                        if pos==0:
+                            count+=1
+                            if count==len(anc_check):
+                                anc_lst.append(anc)
+                        elif anc[0][pos-1]==1 or anc[0][pos]==1:
+                            count+=1
+                            if count==len(anc_check):
+                                anc_lst.append(anc)
+                        else:
+                            break
+                else:
+                    anc_lst.append(anc)
         else:
             
             for i in range(0,2**(n)):
-                anc=np.array(list(format(i,'b')),dtype=int)
+                anc=np.array(list(format(i,'0{}b'.format(n))),dtype=int)
                 
-                anc_pos=np.where(anc[1:]==1)[0]
+                anc_pos=np.where(anc[:]==1)[0]
                 
-                if np.array_equal(anc_pos, anc_idx):
+                if len(np.setdiff1d(anc_idx,anc_pos))==0:
                     anc.shape=(1,n)
-                    anc_lst.append(anc)
+                    anc_pos=np.where(anc[:]==1)[0]
+                    if len(anc_check)>0:
+                        count=0
+                        for pos in anc_check:
+                            if pos==0:
+                                count+=1
+                                if count==len(anc_check):
+                                    anc_lst.append(anc)
+                            elif anc[0][pos-1]==1 or anc[0][pos]==1:
+                                count+=1
+                                if count==len(anc_check):
+                                    anc_lst.append(anc)
+                            else:
+                                break
+                    else:
+                        anc_lst.append(anc)
     return anc_lst
 
 anc_left_im=im_ancestral_generator(left_im)
